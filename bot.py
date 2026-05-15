@@ -1,27 +1,33 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    filters
+)
+
 import requests
-from rapidfuzz import fuzz
 
 TOKEN = "8637704250:AAEQF3t_EzYZ8qvHub0AwTzNFbM4jsm5a5w"
 
-# ذخیره پلی‌لیست
-user_playlist = {}
+# ذخیره موقت آهنگ‌ها
+songs_cache = {}
 
 # ----------------------------
-# سرچ موزیک (API iTunes)
+# جستجوی موزیک (iTunes API)
 # ----------------------------
 def search_songs(query):
     url = f"https://itunes.apple.com/search?term={query}&limit=5"
     res = requests.get(url).json()
 
     results = []
-
     for item in res.get("results", []):
         results.append({
-            "title": item.get("trackName"),
-            "artist": item.get("artistName"),
-            "url": item.get("previewUrl")
+            "title": item.get("trackName", "Unknown"),
+            "artist": item.get("artistName", "Unknown"),
+            "url": item.get("previewUrl", "No link")
         })
 
     return results
@@ -31,41 +37,16 @@ def search_songs(query):
 # ----------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "🎧 Music AI PRO Bot فعال شد\n\nاسم آهنگ رو بفرست 👇"
+        "🎧 Music AI Bot فعال شد\n\nاسم آهنگ رو بفرست 👇"
     )
 
 # ----------------------------
-# انتخاب آهنگ
-# ----------------------------
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    data = query.data.split("|")
-    title = data[1]
-    artist = data[2]
-    url = data[3]
-    user_id = query.from_user.id
-
-    user_playlist.setdefault(user_id, []).append(title)
-
-    msg = f"""
-🎵 {title}
-👤 {artist}
-
-🔗 Preview:
-{url}
-"""
-
-    await query.message.reply_text(msg)
-
-# ----------------------------
-# پیام کاربر
+# دریافت پیام کاربر
 # ----------------------------
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
-    await update.message.reply_text("🔎 AI در حال جستجو...")
+    await update.message.reply_text("🔎 در حال جستجو...")
 
     songs = search_songs(text)
 
@@ -75,13 +56,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     buttons = []
 
-    for s in songs:
-        score = fuzz.ratio(text.lower(), s["title"].lower())
+    for i, s in enumerate(songs):
+        song_id = str(len(songs_cache) + i)
+        songs_cache[song_id] = s
 
         buttons.append([
             InlineKeyboardButton(
                 f"🎵 {s['title'][:25]}",
-                callback_data=f"song|{s['title']}|{s['artist']}|{s['url']}"
+                callback_data=f"song|{song_id}"
             )
         ])
 
@@ -93,19 +75,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ----------------------------
-# پلی‌لیست
+# کلیک روی دکمه
 # ----------------------------
-async def playlist(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    songs = user_playlist.get(user_id, [])
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
 
-    if not songs:
-        await update.message.reply_text("❌ پلی‌لیست خالی است")
-        return
+    try:
+        song_id = query.data.split("|")[1]
+        song = songs_cache.get(song_id)
 
-    await update.message.reply_text(
-        "🎶 پلی‌لیست شما:\n\n" + "\n".join(songs[-10:])
-    )
+        if not song:
+            await query.message.reply_text("❌ آهنگ پیدا نشد")
+            return
+
+        msg = (
+            f"🎵 Title: {song['title']}\n"
+            f"👤 Artist: {song['artist']}\n\n"
+            f"🔗 Preview:\n{song['url']}"
+        )
+
+        await query.message.reply_text(msg)
+
+    except Exception:
+        await query.message.reply_text("❌ خطا در پردازش")
 
 # ----------------------------
 # اجرا
@@ -113,9 +106,8 @@ async def playlist(update: Update, context: ContextTypes.DEFAULT_TYPE):
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("playlist", playlist))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 app.add_handler(CallbackQueryHandler(button_handler))
 
-print("🎧 Music AI PRO Bot Running...")
+print("🎧 Bot Running...")
 app.run_polling()
