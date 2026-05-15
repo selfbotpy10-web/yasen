@@ -1,48 +1,46 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
-    ContextTypes,
-    filters
-)
-
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 import requests
 
 TOKEN = "8637704250:AAEQF3t_EzYZ8qvHub0AwTzNFbM4jsm5a5w"
 
-# ذخیره موقت آهنگ‌ها
 songs_cache = {}
 
-# ----------------------------
-# جستجوی موزیک (iTunes API)
-# ----------------------------
+# -------------------------
+# سرچ موزیک
+# -------------------------
 def search_songs(query):
-    url = f"https://itunes.apple.com/search?term={query}&limit=5"
+    url = f"https://itunes.apple.com/search?term={query}&limit=10"
     res = requests.get(url).json()
 
     results = []
+
     for item in res.get("results", []):
+        title = item.get("trackName")
+        artist = item.get("artistName")
+        preview = item.get("previewUrl")
+
+        # ❌ حذف آهنگ‌های بدون لینک
+        if not preview:
+            continue
+
         results.append({
-            "title": item.get("trackName", "Unknown"),
-            "artist": item.get("artistName", "Unknown"),
-            "url": item.get("previewUrl", "No link")
+            "title": title,
+            "artist": artist,
+            "url": preview
         })
 
     return results
 
-# ----------------------------
-# /start
-# ----------------------------
+# -------------------------
+# start
+# -------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🎧 Music AI Bot فعال شد\n\nاسم آهنگ رو بفرست 👇"
-    )
+    await update.message.reply_text("🎧 آهنگ بفرست")
 
-# ----------------------------
-# دریافت پیام کاربر
-# ----------------------------
+# -------------------------
+# پیام کاربر
+# -------------------------
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
@@ -57,7 +55,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
 
     for i, s in enumerate(songs):
-        song_id = str(len(songs_cache) + i)
+        song_id = f"{update.effective_user.id}_{i}"
         songs_cache[song_id] = s
 
         buttons.append([
@@ -67,16 +65,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         ])
 
-    markup = InlineKeyboardMarkup(buttons)
-
     await update.message.reply_text(
         "🎧 نتایج:",
-        reply_markup=markup
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-# ----------------------------
-# کلیک روی دکمه
-# ----------------------------
+# -------------------------
+# کلیک دکمه
+# -------------------------
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -89,20 +85,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text("❌ آهنگ پیدا نشد")
             return
 
-        msg = (
-            f"🎵 Title: {song['title']}\n"
-            f"👤 Artist: {song['artist']}\n\n"
-            f"🔗 Preview:\n{song['url']}"
+        await query.message.reply_text(
+            f"🎵 {song['title']}\n"
+            f"👤 {song['artist']}\n\n"
+            f"🔗 {song['url']}"
         )
 
-        await query.message.reply_text(msg)
-
     except Exception:
-        await query.message.reply_text("❌ خطا در پردازش")
+        await query.message.reply_text("❌ خطا در اجرای دکمه")
 
-# ----------------------------
+# -------------------------
 # اجرا
-# ----------------------------
+# -------------------------
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
