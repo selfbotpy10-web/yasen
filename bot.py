@@ -13,7 +13,7 @@ import os
 # =========================
 # توکن ربات اصلی
 # =========================
-MAIN_BOT_TOKEN = "PUT_YOUR_BOT_TOKEN_HERE"
+MAIN_BOT_TOKEN = "8886381778:AAG5_n7Ok9wQYTsLWjqJQj0F-aTmsl08FKY"
 
 # =========================
 # ذخیره کاربران
