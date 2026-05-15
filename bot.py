@@ -1,107 +1,132 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
-import requests
+import yt_dlp
+import os
+import uuid
 
 TOKEN = "8637704250:AAEQF3t_EzYZ8qvHub0AwTzNFbM4jsm5a5w"
 
 songs_cache = {}
 
-# -------------------------
-# سرچ موزیک
-# -------------------------
-def search_songs(query):
-    url = f"https://itunes.apple.com/search?term={query}&limit=10"
-    res = requests.get(url).json()
+# --------------------------
+# جستجو در یوتیوب (بدون لینک دادن)
+# --------------------------
+def search_youtube(query):
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "quiet": True,
+        "noplaylist": True,
+        "default_search": "ytsearch5",
+    }
 
-    results = []
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(query, download=False)
 
-    for item in res.get("results", []):
-        title = item.get("trackName")
-        artist = item.get("artistName")
-        preview = item.get("previewUrl")
+        results = []
 
-        # ❌ حذف آهنگ‌های بدون لینک
-        if not preview:
-            continue
+        for entry in info["entries"]:
+            results.append({
+                "id": entry["id"],
+                "title": entry["title"],
+            })
 
-        results.append({
-            "title": title,
-            "artist": artist,
-            "url": preview
-        })
+        return results
 
-    return results
+# --------------------------
+# دانلود mp3
+# --------------------------
+def download_audio(video_id):
+    file_id = str(uuid.uuid4())
 
-# -------------------------
+    url = f"https://www.youtube.com/watch?v={video_id}"
+
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "outtmpl": f"{file_id}.mp3",
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
+            "preferredquality": "192",
+        }],
+        "quiet": True,
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    return f"{file_id}.mp3"
+
+# --------------------------
 # start
-# -------------------------
+# --------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🎧 آهنگ بفرست")
+    await update.message.reply_text("🎧 اسم آهنگ رو بفرست")
 
-# -------------------------
-# پیام کاربر
-# -------------------------
+# --------------------------
+# سرچ آهنگ
+# --------------------------
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
     await update.message.reply_text("🔎 در حال جستجو...")
 
-    songs = search_songs(text)
-
-    if not songs:
-        await update.message.reply_text("❌ چیزی پیدا نشد")
-        return
+    results = search_youtube(text)
 
     buttons = []
 
-    for i, s in enumerate(songs):
-        song_id = f"{update.effective_user.id}_{i}"
-        songs_cache[song_id] = s
+    for i, r in enumerate(results):
+        songs_cache[r["id"]] = r
 
         buttons.append([
             InlineKeyboardButton(
-                f"🎵 {s['title'][:25]}",
-                callback_data=f"song|{song_id}"
+                f"🎵 {r['title'][:30]}",
+                callback_data=f"play|{r['id']}"
             )
         ])
 
     await update.message.reply_text(
-        "🎧 نتایج:",
+        "🎧 انتخاب کن:",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-# -------------------------
-# کلیک دکمه
-# -------------------------
+# --------------------------
+# کلیک دکمه → دانلود + ارسال
+# --------------------------
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
+    video_id = query.data.split("|")[1]
+    song = songs_cache.get(video_id)
+
+    if not song:
+        await query.message.reply_text("❌ پیدا نشد")
+        return
+
+    await query.message.reply_text("⬇️ در حال دانلود آهنگ...")
+
     try:
-        song_id = query.data.split("|")[1]
-        song = songs_cache.get(song_id)
+        file_path = download_audio(song["id"])
 
-        if not song:
-            await query.message.reply_text("❌ آهنگ پیدا نشد")
-            return
-
-        await query.message.reply_text(
-            f"🎵 {song['title']}\n"
-            f"👤 {song['artist']}\n\n"
-            f"🔗 {song['url']}"
+        await query.message.reply_audio(
+            audio=open(file_path, "rb"),
+            title=song["title"],
+            caption=f"🎵 {song['title']}"
         )
 
-    except Exception:
-        await query.message.reply_text("❌ خطا در اجرای دکمه")
+        os.remove(file_path)
 
-# -------------------------
+    except Exception as e:
+        await query.message.reply_text("❌ دانلود ناموفق شد")
+
+# --------------------------
 # اجرا
-# -------------------------
+# --------------------------
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 app.add_handler(CallbackQueryHandler(button_handler))
 
-print("🎧 Bot Running...")
+print("🎧 Music Download Bot Running...")
 app.run_polling()
