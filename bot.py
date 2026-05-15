@@ -14,7 +14,7 @@ import os
 # =========================
 # توکن ربات مادر
 # =========================
-MAIN_BOT_TOKEN = "8886381778:AAG5_n7Ok9wQYTsLWjqJQj0F-aTmsl08FKY"
+MAIN_BOT_TOKEN = "8819363353:AAG1BYGdVnd4mgHzQk0rYGCmeOh5THclx88"
 
 # =========================
 # زبان‌ها
