@@ -2,17 +2,17 @@
 // config.php
 
 
-define('BOT_TOKEN', 'BotToken'); // توکن ربات 
+define('BOT_TOKEN', '8802313582:AAFgKUWD9wkKCuRBwvT3o0Pj2otqzQwE4Ho'); // توکن ربات 
 
 
-define('OWNER_ID', IdAddy); // آیدی عددی ادمین اصلی
+define('OWNER_ID', 8889459676); // آیدی عددی ادمین اصلی
 
 
 define('DB_FILE', 'database.json'); // نام فایل ذخیره کاربران
 
 // دکمه اسپانسر
 define('SPONSOR_TEXT', '🔥 به بزرگترین مرجع سورس‌های رایگان بپیوندید!');
-define('SPONSOR_URL', 'https://t.me/Sourrce_kade');
+define('SPONSOR_URL', 'https://t.me/Nim_Shab2');
 
 // توابع کمکی برای دیتابیس 
 function getDB() {
