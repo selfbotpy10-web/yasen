@@ -1,10 +1,6 @@
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackQueryHandler
-from telethon import TelegramClient
-from telethon.sessions import StringSession
-from telethon.tl.functions.channels import GetParticipantRequest
-from telethon.errors import UserNotParticipantError
 import asyncio
 import time
 import secrets
@@ -22,13 +18,13 @@ logging.basicConfig(
 )
 
 # حالت‌های مکالمه
-CHECK_MEMBERSHIP, ACTIVATION_PANEL, GET_PHONE, GET_CODE, COIN_PURCHASE, CONFIRM_PURCHASE = range(6)
+CHECK_MEMBERSHIP, ACTIVATION_PANEL, COIN_PURCHASE, CONFIRM_PURCHASE = range(4)
 
 class TelegramAuthBot:
-    def __init__(self, token, api_id, api_hash):
+    def __init__(self, token, admin_id, channel, channel_url):
         self.token = token
-        self.api_id = api_id
-        self.api_hash = api_hash
+        self.channel_username = channel.strip()
+        self.channel_url = channel_url.strip()
         self.application = Application.builder().token(token).build()
         self.user_sessions = {}
         self.user_coins = {}
@@ -38,8 +34,7 @@ class TelegramAuthBot:
         self.user_first_start = {}
         self.active_bets = {}  # اضافه شد
         self.group_bets = {}   # اضافه شد
-        self.channel_username = "Music_sohail_bot1"
-        self.owner_id = 8650091524
+        self.owner_id = int(admin_id)
         
         # دیتابیس کاربران
         self.init_users_db()
@@ -94,12 +89,6 @@ class TelegramAuthBot:
                 ACTIVATION_PANEL: [
                     CallbackQueryHandler(self.activation_panel, pattern='^(activate|support|buy_coins|back|stats|invite)$')
                 ],
-                GET_PHONE: [
-                    MessageHandler(filters.TEXT & ~filters.COMMAND, self.get_phone_number)
-                ],
-                GET_CODE: [
-                    CallbackQueryHandler(self.verify_code, pattern='^.*$')
-                ],
                 COIN_PURCHASE: [
                     CallbackQueryHandler(self.coin_purchase, pattern='^.*$')
                 ],
@@ -119,7 +108,7 @@ class TelegramAuthBot:
     def create_welcome_keyboard(self):
         keyboard = [
             [
-                InlineKeyboardButton("📥 پیوستن", url="https://t.me/Music_sohail_bot1"),
+                InlineKeyboardButton("📥 پیوستن", url=self.channel_url),
                 InlineKeyboardButton("✅ بررسی", callback_data="check")
             ]
         ]
@@ -161,42 +150,6 @@ class TelegramAuthBot:
             ],
             [
                 InlineKeyboardButton("🔙 بازگشت", callback_data="back")
-            ]
-        ]
-        return InlineKeyboardMarkup(keyboard)
-    
-    def create_phone_keyboard(self):
-        keyboard = [
-            [
-                InlineKeyboardButton("🔙 بازگشت به منوی اصلی", callback_data="back")
-            ]
-        ]
-        return InlineKeyboardMarkup(keyboard)
-    
-    def create_code_keyboard(self, current_code=""):
-        display_code = current_code if current_code else "•••••"
-        
-        keyboard = [
-            [InlineKeyboardButton(f"🔢 کد فعلی: {display_code}", callback_data="display")],
-            [
-                InlineKeyboardButton("1", callback_data="1"),
-                InlineKeyboardButton("2", callback_data="2"),
-                InlineKeyboardButton("3", callback_data="3")
-            ],
-            [
-                InlineKeyboardButton("4", callback_data="4"),
-                InlineKeyboardButton("5", callback_data="5"),
-                InlineKeyboardButton("6", callback_data="6")
-            ],
-            [
-                InlineKeyboardButton("7", callback_data="7"),
-                InlineKeyboardButton("8", callback_data="8"),
-                InlineKeyboardButton("9", callback_data="9")
-            ],
-            [
-                InlineKeyboardButton("🗑️ حذف", callback_data="delete"),
-                InlineKeyboardButton("0", callback_data="0"),
-                InlineKeyboardButton("✅ تایید", callback_data="submit")
             ]
         ]
         return InlineKeyboardMarkup(keyboard)
@@ -314,62 +267,34 @@ class TelegramAuthBot:
     async def check_membership(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
-        
         user_id = query.from_user.id
-        
         if query.data == "join":
             await query.edit_message_text(
-                "📥 در حال انتقال به کانال...\n\n"
-                "پس از پیوستن، روی دکمه '✅ بررسی' کلیک کنید.",
+                "📥 ابتدا عضو کانال شوید و سپس بررسی را بزنید.",
                 reply_markup=self.create_welcome_keyboard()
             )
             return CHECK_MEMBERSHIP
-        
         await query.edit_message_text("🔍 در حال بررسی عضویت شما...")
-        
         try:
-            client = TelegramClient(StringSession(), self.api_id, self.api_hash)
-            await client.start(bot_token=self.token)
-            
-            try:
-                channel = await client.get_entity(self.channel_username)
-                await client(GetParticipantRequest(channel=channel, participant=user_id))
-                
-                await query.edit_message_text("🎉 عضویت شما تأیید شد!")
-                
-                activation_text = (
-                    "💡 𝐒𝐞𝐭 𝐘𝐨𝐮𝐫 𝐒𝐞𝐥𝐟 𝐀𝐜𝐭𝐢𝐯𝐞 🔋\n\n"
-                    "Activate your own self from the menu below 👇\n"
-                    "🚀 One tap away from your smart control panel ⚙️"
-                )
-                
+            member = await context.bot.get_chat_member(chat_id=self.channel_username, user_id=user_id)
+            if member.status in ("member", "administrator", "creator") or (member.status == "restricted" and getattr(member, "is_member", False)):
                 await query.edit_message_text(
-                    text=activation_text,
-                    reply_markup=self.create_activation_keyboard(),
-                    parse_mode='Markdown'
+                    "🎉 عضویت شما تأیید شد!\n\nپنل اصلی:",
+                    reply_markup=self.create_activation_keyboard()
                 )
-                
-                await client.disconnect()
                 return ACTIVATION_PANEL
-                
-            except UserNotParticipantError:
-                await query.edit_message_text(
-                    "❌ شما هنوز عضو کانال نشده‌اید!\n\n"
-                    "لطفاً ابتدا به کانال @Sourrce_kade بپیوندید سپس روی '✅ بررسی' کلیک کنید.",
-                    reply_markup=self.create_welcome_keyboard()
-                )
-                await client.disconnect()
-                return CHECK_MEMBERSHIP
-                
-        except Exception as e:
-            logging.error(f"Error checking membership: {e}")
             await query.edit_message_text(
-                "❌ خطا در بررسی عضویت!\n\n"
-                "لطفاً دوباره تلاش کنید.",
+                "❌ هنوز عضو کانال نیستید. ابتدا عضو شوید و دوباره بررسی کنید.",
                 reply_markup=self.create_welcome_keyboard()
             )
-            return CHECK_MEMBERSHIP
-    
+        except Exception as e:
+            logging.exception("Membership check failed: %s", e)
+            await query.edit_message_text(
+                "❌ بررسی عضویت انجام نشد. مطمئن شوید ربات در کانال ادمین است و شناسه کانال درست تنظیم شده.",
+                reply_markup=self.create_welcome_keyboard()
+            )
+        return CHECK_MEMBERSHIP
+
     async def activation_panel(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
@@ -377,30 +302,13 @@ class TelegramAuthBot:
         user_id = query.from_user.id
         
         if query.data == "activate":
-            user_coins = self.user_coins.get(user_id, 0)
-            if user_coins < 3:
-                await query.edit_message_text(
-                    f"❌ موجودی سکه شما کافی نیست!\n\n"
-                    f"💰 موجودی فعلی: {user_coins} سکه\n"
-                    f"💸 برای فعال‌سازی سلف به 3 سکه نیاز دارید.\n\n"
-                    f"لطفاً از بخش '💰 خرید سکه' اقدام به خرید نمایید.",
-                    reply_markup=self.create_activation_keyboard()
-                )
-                return ACTIVATION_PANEL
-            
-            phone_text = (
-                "📱 لطفاً شماره تلفن خود را به صورت دستی ارسال کنید:\n\n"
-                "📝 فرمت پیشنهادی:\n"
-                "• +989123456789\n"
-                "• 09123456789\n\n"
-                "⚠️ شماره باید معتبر و قابل دریافت کد باشد."
-            )
-            
             await query.edit_message_text(
-                phone_text,
-                reply_markup=self.create_phone_keyboard()
+                "ℹ️ این نسخه فقط امکانات امن ربات را از طریق Bot API ارائه می‌کند.\n\n"
+                "برای امنیت حساب، شماره تلفن، کد ورود، رمز دومرحله‌ای یا Session تلگرام از شما دریافت نمی‌شود.\n"
+                "امکانات موجودی، دعوت، انتقال سکه و شرط‌بندی از منوی دستورات قابل استفاده‌اند.",
+                reply_markup=self.create_activation_keyboard()
             )
-            return GET_PHONE
+            return ACTIVATION_PANEL
         
         elif query.data == "buy_coins":
             coin_text = (
@@ -531,7 +439,7 @@ class TelegramAuthBot:
                 f"😘 کاربر گرامی برای خرید ابتدا مبلغ تعیین شده رو به شماره کارت بالا انتقال داده سپس عکس از رسید را برای مالک سلف ارسال کنید ❤️‍🩹 @sinyoremad"
             )
             
-            await query.edit_message_text(final_purchase_text)
+            await query.edit_message_text(purchase_text)
             
             context.user_data['coin_amount'] = ''
             return ConversationHandler.END
@@ -593,304 +501,10 @@ class TelegramAuthBot:
             )
             return COIN_PURCHASE
     
-    async def get_phone_number(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user_input = update.message.text
-        user_id = update.message.from_user.id
-        
-        if user_input == "🔙 بازگشت به منوی اصلی":
-            activation_text = (
-                "💡 𝐒𝐞𝐭 𝐘𝐨𝐮𝐫 𝐒𝐞𝐥𝐟 𝐀𝐜𝐭𝐢𝐯𝐞 🔋\n\n"
-                "Activate your own self from the menu below 👇\n"
-                "🚀 One tap away from your smart control panel ⚙️"
-            )
-            
-            await update.message.reply_text(
-                activation_text,
-                reply_markup=self.create_activation_keyboard()
-            )
-            return ACTIVATION_PANEL
-        
-        phone_number = user_input
-        phone_number = ''.join(filter(str.isdigit, phone_number))
-        
-        if phone_number.startswith('98') and len(phone_number) == 11:
-            phone_number = '+' + phone_number
-        elif phone_number.startswith('09') and len(phone_number) == 11:
-            phone_number = '+98' + phone_number[1:]
-        elif len(phone_number) == 10 and phone_number.startswith('9'):
-            phone_number = '+98' + phone_number
-        
-        if len(phone_number) < 10:
-            await update.message.reply_text(
-                "❌ شماره تلفن معتبر نیست!\n\n"
-                "لطفاً شماره خود را به درستی وارد کنید:\n"
-                "مثال: +989123456789 یا 09123456789\n\n"
-                "یا برای بازگشت از دکمه زیر استفاده کنید:",
-                reply_markup=self.create_phone_keyboard()
-            )
-            return GET_PHONE
-        
-        try:
-            processing_msg = await update.message.reply_text("⏳ در حال ارسال کد تأیید...")
-            
-            result = await self.send_verification_code(phone_number, user_id)
-            
-            if result['success']:
-                self.user_sessions[user_id] = {
-                    'phone_number': phone_number,
-                    'phone_code_hash': result['phone_code_hash'],
-                    'client': result['client'],
-                    'timestamp': time.time(),
-                    'entered_code': ''
-                }
-                
-                code_message = (
-                    "🔓 𝐆𝐞𝐭 𝐘𝐨𝐮𝐫 𝐀𝐜𝐜𝐞𝐬𝐬 𝐂𝐨𝐝𝐞 💫\n\n"
-                    "Press the button below to receive your login code 🧩\n"
-                    "Use it to unlock your personal control system ⚡"
-                )
-                
-                await processing_msg.edit_text(
-                    code_message,
-                    reply_markup=self.create_code_keyboard()
-                )
-                
-                return GET_CODE
-                
-            else:
-                await processing_msg.edit_text(
-                    f"❌ خطا در ارسال کد تأیید:\n{result['error']}\n\n"
-                    "لطفاً شماره دیگری وارد نمایید:",
-                    reply_markup=self.create_phone_keyboard()
-                )
-                return GET_PHONE
-                
-        except Exception as e:
-            logging.error(f"Error in get_phone_number: {e}")
-            await update.message.reply_text(
-                "❌ خطایی رخ داد. لطفاً دوباره تلاش کنید:",
-                reply_markup=self.create_phone_keyboard()
-            )
-            return GET_PHONE
-    
-    async def send_verification_code(self, phone_number: str, user_id: int):
-        try:
-            client = TelegramClient(StringSession(), self.api_id, self.api_hash)
-            await client.connect()
-            
-            result = await client.send_code_request(phone_number)
-            
-            return {
-                'success': True,
-                'phone_code_hash': result.phone_code_hash,
-                'client': client,
-                'message': 'کد تأیید با موفقیت ارسال شد'
-            }
-            
-        except Exception as e:
-            logging.error(f"Telethon error in send_verification_code: {e}")
-            
-            error_message = str(e)
-            if "FLOOD" in error_message:
-                return {'success': False, 'error': 'تعداد درخواست‌ها زیاد است. لطفاً چند دقیقه صبر کنید.'}
-            elif "PHONE_NUMBER_INVALID" in error_message:
-                return {'success': False, 'error': 'شماره تلفن معتبر نیست.'}
-            elif "PHONE_NUMBER_BANNED" in error_message:
-                return {'success': False, 'error': 'شماره تلفن مسدود شده است.'}
-            else:
-                return {'success': False, 'error': f'خطا در ارسال کد: {error_message}'}
-    
-    async def verify_code(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        query = update.callback_query
-        await query.answer()
-        
-        user_id = query.from_user.id
-        
-        if user_id not in self.user_sessions:
-            await query.edit_message_text(
-                "❌ سشن شما منقضی شده است. لطفاً دوباره /start را ارسال کنید."
-            )
-            return ConversationHandler.END
-        
-        session_data = self.user_sessions[user_id]
-        
-        if query.data == "delete":
-            session_data['entered_code'] = ''
-            await query.edit_message_text(
-                "🗑️ کد وارد شده پاک شد.\nلطفاً کد را دوباره وارد کنید:",
-                reply_markup=self.create_code_keyboard()
-            )
-            return GET_CODE
-        
-        elif query.data == "submit":
-            if len(session_data['entered_code']) != 5:
-                await query.edit_message_text(
-                    "❌ کد باید ۵ رقمی باشد! لطفاً کد کامل را وارد کنید.",
-                    reply_markup=self.create_code_keyboard(session_data['entered_code'])
-                )
-                return GET_CODE
-            
-            return await self.check_verification_code(query, context, session_data['entered_code'])
-        
-        elif query.data in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
-            if len(session_data['entered_code']) < 5:
-                session_data['entered_code'] += query.data
-                
-                if len(session_data['entered_code']) == 5:
-                    await query.edit_message_text(
-                        f"✅ کد کامل شد: {session_data['entered_code']}\n"
-                        "📲 برای تأیید روی دکمه '✅ تایید' کلیک کنید.",
-                        reply_markup=self.create_code_keyboard(session_data['entered_code'])
-                    )
-                else:
-                    await query.edit_message_text(
-                        f"🔢 کد فعلی: {session_data['entered_code']}••\n"
-                        f"📝 {5 - len(session_data['entered_code'])} رقم باقی مانده",
-                        reply_markup=self.create_code_keyboard(session_data['entered_code'])
-                    )
-            else:
-                await query.edit_message_text(
-                    "❌ کد کامل شده! برای تأیید روی دکمه '✅ تایید' کلیک کنید.",
-                    reply_markup=self.create_code_keyboard(session_data['entered_code'])
-                )
-            
-            return GET_CODE
-        
-        elif query.data == "display":
-            await query.answer(f"کد فعلی: {session_data['entered_code'] or 'خالی'}")
-            return GET_CODE
-    
-    async def check_verification_code(self, query, context: ContextTypes.DEFAULT_TYPE, code: str):
-        user_id = query.from_user.id
-        session_data = self.user_sessions[user_id]
-        client = session_data['client']
-        phone_number = session_data['phone_number']
-        phone_code_hash = session_data['phone_code_hash']
-        
-        await query.edit_message_text("⏳ در حال بررسی کد و ورود به اکانت...")
-        
-        try:
-            await client.sign_in(
-                phone=phone_number,
-                code=code,
-                phone_code_hash=phone_code_hash
-            )
-            
-            await query.edit_message_text("✅ کد تأیید صحیح است! در حال فعال‌سازی سلف بات...")
-            
-            session_string = client.session.save()
-            
-            success = await self.activate_selfbot(session_string, user_id, phone_number)
-            
-            if success:
-                # کسر 3 سکه از موجودی کاربر
-                if user_id in self.user_coins and self.user_coins[user_id] >= 3:
-                    self.user_coins[user_id] -= 3
-                
-                await query.message.reply_text(
-                    "🎉 **سلف بات با موفقیت فعال شد!**\n\n"
-                    "✅ اکانت شما با موفقیت تأیید شد\n"
-                    "✅ سلف بات به صورت خودکار اجرا شد\n"
-                    "💰 3 سکه از حساب شما کسر شد\n"
-                    "🔮 اکنون می‌توانید از دستورات سلف بات استفاده کنید."
-                )
-            else:
-                await query.message.reply_text(
-                    "⚠️ **ورود موفق اما خطا در اجرای سلف بات**\n\n"
-                    "✅ اکانت شما تأیید شد\n"
-                    "❌ خطا در اجرای خودکار سلف بات"
-                )
-            
-            if user_id in self.user_sessions:
-                await self.user_sessions[user_id]['client'].disconnect()
-                del self.user_sessions[user_id]
-            
-            return ConversationHandler.END
-            
-        except Exception as sign_in_error:
-            error_msg = str(sign_in_error)
-            
-            if "SESSION_PASSWORD_NEEDED" in error_msg:
-                await query.edit_message_text(
-                    "🔐 حساب شما دارای رمز دومرحله‌ای است.\n"
-                    "لطفاً رمز عبور خود را به صورت متن ارسال کنید:",
-                    reply_markup=self.create_code_keyboard()
-                )
-                context.user_data['waiting_for_password'] = True
-                return GET_CODE
-            
-            elif "PHONE_CODE_EXPIRED" in error_msg:
-                await query.edit_message_text(
-                    "❌ کد تأیید منقضی شده است!\n"
-                    "لطفاً دوباره /start را ارسال کنید."
-                )
-            
-            elif "CODE_INVALID" in error_msg:
-                await query.edit_message_text(
-                    "❌ کد تأیید نامعتبر است!\n"
-                    "لطفاً کد صحیح را وارد کنید:",
-                    reply_markup=self.create_code_keyboard()
-                )
-                session_data['entered_code'] = ''
-                return GET_CODE
-            
-            else:
-                await query.edit_message_text(
-                    f"❌ خطا در ورود: {error_msg}\n"
-                    "لطفاً دوباره /start را ارسال کنید."
-                )
-            
-            if user_id in self.user_sessions:
-                await self.user_sessions[user_id]['client'].disconnect()
-                del self.user_sessions[user_id]
-            
-            return ConversationHandler.END
-    
-    async def activate_selfbot(self, session_string: str, user_id: int, phone_number: str):
-        """فعال‌سازی خودکار سلف بات"""
-        try:
-            # ذخیره سشن در فایل موقت
-            temp_file = f"session_{user_id}.txt"
-            with open(temp_file, 'w') as f:
-                f.write(session_string)
-            
-            # اجرای سلف بات در فرآیند جداگانه
-            subprocess.Popen([
-                sys.executable, 'self.py',
-                '--session', temp_file,
-                '--api-id', str(self.api_id),
-                '--api-hash', self.api_hash
-            ])
-            
-            # ذخیره اطلاعات در دیتابیس
-            conn = sqlite3.connect('users.db')
-            cursor = conn.cursor()
-            cursor.execute('''INSERT OR REPLACE INTO users 
-                           (user_id, phone, coins, join_date, is_active) 
-                           VALUES (?, ?, ?, datetime('now'), 1)''',
-                         (user_id, phone_number, self.user_coins.get(user_id, 0)))
-            conn.commit()
-            conn.close()
-            
-            return True
-        except Exception as e:
-            logging.error(f"Error activating selfbot: {e}")
-            return False
-    
     async def cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user_id = update.message.from_user.id
-        
-        if user_id in self.user_sessions:
-            await self.user_sessions[user_id]['client'].disconnect()
-            del self.user_sessions[user_id]
-        
-        await update.message.reply_text(
-            "❌ عملیات لغو شد.\n\n"
-            "برای شروع مجدد /start را ارسال کنید."
-        )
+        await update.message.reply_text("❌ عملیات لغو شد. برای شروع دوباره /start را بزنید.")
         return ConversationHandler.END
-
-    # متدهای شرط‌بندی و انتقال سکه
+    
     async def create_bet(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """ایجاد شرط‌بندی جدید"""
         user_id = update.message.from_user.id
@@ -1538,16 +1152,23 @@ class TelegramAuthBot:
     
     def run(self):
         print("🤖 ربات SelfStruct System در حال اجراست...")
-        print("🔑 API ID:", self.api_id)
         print("👑 مالک ربات:", self.owner_id)
         print("💰 موجودی مالک: نامحدود")
         self.application.run_polling(allowed_updates=Update.ALL_TYPES)
 
-# تنظیمات اصلی
+# تنظیمات اصلی: مقادیر محرمانه فقط از Railway Variables خوانده می‌شوند.
 if __name__ == "__main__":
-    BOT_TOKEN = "9011441415:AAGhuRogpT1m3fZoG72_0FvDHwli6NYB5xA"
-    API_ID = 24775679
-    API_HASH = "6c534bd84521d6325816520af1d48a23"
-    
-    bot = TelegramAuthBot(BOT_TOKEN, API_ID, API_HASH)
+    BOT_TOKEN = os.environ.get("BOT_TOKEN", "").strip()
+    ADMIN_ID = os.environ.get("ADMIN_ID", "").strip()
+    FORCE_CHANNEL = os.environ.get("FORCE_CHANNEL", "").strip()
+    FORCE_CHANNEL_URL = os.environ.get("FORCE_CHANNEL_URL", "").strip()
+
+    if not BOT_TOKEN:
+        raise RuntimeError("متغیر BOT_TOKEN در Railway تنظیم نشده است.")
+    if not ADMIN_ID.isdigit():
+        raise RuntimeError("ADMIN_ID باید آیدی عددی ادمین باشد.")
+    if not FORCE_CHANNEL or not FORCE_CHANNEL_URL.startswith("https://t.me/"):
+        raise RuntimeError("FORCE_CHANNEL و FORCE_CHANNEL_URL را در Railway تنظیم کنید.")
+
+    bot = TelegramAuthBot(BOT_TOKEN, int(ADMIN_ID), FORCE_CHANNEL, FORCE_CHANNEL_URL)
     bot.run()
