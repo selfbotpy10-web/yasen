@@ -1,5 +1,6 @@
 import os
 import re
+import html
 import sqlite3
 import logging
 import asyncio
@@ -508,11 +509,14 @@ async def group_text(update, context):
             cur = c.execute("INSERT INTO games(chat_id,message_id,creator_id,stake,created_at) VALUES(?,?,?,?,?)",
                             (m.chat_id, 0, uid, stake, datetime.utcnow().isoformat()))
             gid = cur.lastrowid
-        text = (f"🎮 <b>چالش NIRO آغاز شد!</b>\n\n"
-                f"👤 سازنده: {m.from_user.mention_html()}\n"
-                f"💎 مبلغ شرط هر نفر: <b>{stake:,} الماس</b>\n"
-                "🤝 بازیکن دوم برای ورود، دکمه پیوستن را بزند.\n"
-                "🔒 پس از پیوستن، مبلغ بازی قفل و نتیجه مخفیانه تعیین می‌شود.")
+        text = (
+            "◈ ━━━━━━━ 𝐕𝐈𝐏 𝐁𝐄𝐓 ━━━━━━━ ◈\n\n"
+            f"👤 𝐕𝐈𝐏 : {m.from_user.mention_html()}\n"
+            f"💎 𝐕𝐈𝐏 : <b>{stake:,}</b>\n"
+            "👤 𝐕𝐈𝐏 : منتظر حریف\n\n"
+            "🔐 𝐇𝐈𝐃𝐃𝐄𝐍 𝐁𝐄𝐓\n\n"
+            "◈ ━━━━━━━━━━━━━━━━━━━━━ ◈"
+        )
         try:
             with open(GAME_IMAGE_PATH, "rb") as photo:
                 sent = await m.reply_photo(
@@ -592,11 +596,21 @@ async def game_callbacks(update, context):
         with db() as c: c.execute("UPDATE games SET status='waiting',opponent_id=NULL WHERE id=?", (gid,))
         return await q.answer("موجودی شما کافی نیست.", show_alert=True)
     await q.answer("شرط‌ها ثبت شد؛ نتیجه در حال تعیین است.")
+    creator_row = user_row(creator)
+    creator_name = html.escape((creator_row["first_name"] if creator_row else "") or "بازیکن اول")
+    opponent_name = html.escape(q.from_user.first_name or "بازیکن دوم")
+
+    creator_mention = f'<a href="tg://user?id={creator}">{creator_name}</a>'
+    opponent_mention = f'<a href="tg://user?id={opponent}">{opponent_name}</a>'
+
     await edit_game_message(
         q,
-        "🔐 <b>شرط‌بندی مخفی NIRO شروع شد!</b>\n\n"
-        "💎 مبلغ شرط هر بازیکن قفل شد.\n"
-        "🎯 نتیجه بدون نمایش تاس و به‌صورت تصادفی تعیین می‌شود...",
+        "◈ ━━━━━━━ 𝐕𝐈𝐏 𝐌𝐀𝐓𝐂𝐇 ━━━━━━━ ◈\n\n"
+        f"👤 𝐕𝐈𝐏 𝟏 : {creator_mention}\n"
+        f"👤 𝐕𝐈𝐏 𝟐 : {opponent_mention}\n\n"
+        f"💎 𝐁𝐄𝐓 : {stake:,} + {stake:,}\n"
+        f"💰 𝐏𝐎𝐓 : {stake * 2:,}\n\n"
+        "◈ ━━━━━━━━━━━━━━━━━━━━━ ◈",
         parse_mode=ParseMode.HTML
     )
     try:
@@ -609,22 +623,21 @@ async def game_callbacks(update, context):
         with db() as c:
             c.execute("UPDATE games SET status='finished' WHERE id=? AND status='playing'", (gid,))
         winner_row = user_row(winner)
-        winner_name = (winner_row['first_name'] if winner_row else None) or "بازیکن برنده"
-        result = (
-            "🏆 <b>برنده این دور:</b> "
-            f"<a href='tg://user?id={winner}'>{winner_name}</a>\n"
-            f"💎 <b>جایزه:</b> {prize:,} الماس\n"
-            f"📉 بازنده: <a href='tg://user?id={loser}'>مشاهده بازیکن</a>\n"
-            "🔒 نتیجه مخفیانه تعیین شد و تاس نمایش داده نشد."
-        )
+        loser_row = user_row(loser)
+        winner_name = html.escape((winner_row["first_name"] if winner_row else "") or "برنده")
+        loser_name = html.escape((loser_row["first_name"] if loser_row else "") or "بازنده")
+
+        winner_mention = f'<a href="tg://user?id={winner}">{winner_name}</a>'
+        loser_mention = f'<a href="tg://user?id={loser}">{loser_name}</a>'
+
         await edit_game_message(
             q,
-            "🎮 <b>نتیجه نهایی شرط‌بندی NIRO</b>\n\n"
-            f"👤 بازیکن اول: <a href='tg://user?id={creator}'>مشاهده</a>\n"
-            f"👤 بازیکن دوم: <a href='tg://user?id={opponent}'>مشاهده</a>\n"
-            f"💰 مبلغ شرط هر نفر: <b>{stake:,} الماس</b>\n\n"
-            f"{result}\n\n"
-            "✨ این پیام نتیجه نهایی بازی است.",
+            "◈ ━━━━━━━ 𝐕𝐈𝐏 𝐑𝐄𝐒𝐔𝐋𝐓 ━━━━━━━ ◈\n\n"
+            f"🏆 𝐕𝐈𝐏 برنده : {winner_mention}\n"
+            f"💔 𝐕𝐈𝐏 بازنده : {loser_mention}\n\n"
+            f"💎 𝐕𝐈𝐏 مقدار : {prize:,}\n"
+            "💸 𝐕𝐈𝐏 مالیات : 0\n\n"
+            "◈ ━━━━━━━━━━━━━━━━━━━━━ ◈",
             parse_mode=ParseMode.HTML
         )
     except Exception:
