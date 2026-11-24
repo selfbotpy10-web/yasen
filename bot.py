@@ -30,7 +30,7 @@ SUPPORT_USERNAME = os.getenv("SUPPORT_USERNAME", "your_support")
 BET_GROUP_ID = int(os.getenv("BET_GROUP_ID", "0") or 0)
 BET_GROUP_LINK = os.getenv("BET_GROUP_LINK", "https://t.me/")
 DB_PATH = os.getenv("DB_PATH", "niro_self.sqlite3")
-GAME_IMAGE_PATH = os.getenv("GAME_IMAGE_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "game_start.png"))
+GAME_IMAGE_PATH = os.getenv("GAME_IMAGE_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "game_start.jpg"))
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
