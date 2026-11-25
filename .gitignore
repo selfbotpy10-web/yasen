@@ -1,3 +1,7 @@
+*.backup*
+*.save
+bot_backup.py
+apply_*.py
 .env
-*.sqlite3
 __pycache__/
+*.pyc
