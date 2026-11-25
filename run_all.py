@@ -1,40 +1,40 @@
-import subprocess
+import asyncio
+import os
 import sys
-import time
-import signal
 
-processes = []
+async def run_service(name, command):
+    while True:
+        print(f"Starting {name}...", flush=True)
 
-def stop_all():
-    for process in processes:
-        if process.poll() is None:
-            process.terminate()
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            env=os.environ.copy()
+        )
 
-def main():
-    jobs = [
-        [sys.executable, "-u", "bot.py"],
-        [sys.executable, "-u", "niro/self_panel.py"],
+        code = await process.wait()
+        print(f"{name} stopped with code {code}", flush=True)
+        print(f"Restarting {name} in 3 seconds...", flush=True)
+
+        await asyncio.sleep(3)
+
+async def main():
+    port = os.environ.get("PORT", "8080")
+
+    bot_command = [
+        sys.executable, "-u", "bot.py"
     ]
 
-    try:
-        for job in jobs:
-            processes.append(subprocess.Popen(job))
-            print("Started:", " ".join(job), flush=True)
+    web_command = [
+        sys.executable, "-m", "uvicorn",
+        "webapp:app",
+        "--host", "0.0.0.0",
+        "--port", port
+    ]
 
-        while True:
-            for process in processes:
-                code = process.poll()
-                if code is not None:
-                    print("A process stopped:", code, flush=True)
-                    stop_all()
-                    return code
-            time.sleep(2)
-
-    except KeyboardInterrupt:
-        stop_all()
-        return 0
-    finally:
-        stop_all()
+    await asyncio.gather(
+        run_service("Telegram Bot", bot_command),
+        run_service("NIRO Mini App", web_command)
+    )
 
 if __name__ == "__main__":
-    sys.exit(main())
+    asyncio.run(main())

@@ -692,7 +692,7 @@ async def callbacks(update, context):
     if data in ("account","self","group","config","free","help"):
         return await show_section(update, context)
     if data.startswith("selfinfo:"):
-        return await self.self_feature_info(update, context)
+        return await self_feature_info(update, context)
     if data == "guide": return await guide(update, context)
     if data == "buy": return await buy_start(update, context)
     if data.startswith(("digit:","buy_confirm","buy_cancel")):
