@@ -22,6 +22,7 @@ from telegram.ext import (
 
 # ===================== تنظیمات =====================
 BOT_TOKEN = os.getenv("BOT_TOKEN", "توکن_ربات_را_اینجا_بگذار")
+NIRO_WEBAPP_URL = os.getenv("NIRO_WEBAPP_URL", "https://worker-production-152c0d87.up.railway.app")
 ADMIN_IDS = {int(x) for x in os.getenv("ADMIN_IDS", "").replace(";", ",").split(",") if x.strip().isdigit()}
 OWNER_ID = int(os.getenv("OWNER_ID", "0") or 0)
 CARD_NUMBER = os.getenv("CARD_NUMBER", "شماره کارت را اینجا قرار دهید")
