@@ -193,8 +193,20 @@ async def show_section(update, context):
     if key == "account":
         return await account(update, context)
     if key == "self":
-        text = "🛠 <b>بخش فعال‌سازی سلف</b>\n\nاین قابلیت در حال به‌روزرسانی و آماده‌سازی نسخه جدید است.\n🔔 پس از تکمیل، اطلاع‌رسانی خواهد شد."
-        kb = [[InlineKeyboardButton("🔙 بازگشت", callback_data="home")]]
+        text = (
+            "🛠 <b>پنل فعال‌سازی NIRO SELF</b>\n"
+            "━━━━━━━━━━━━━━\n\n"
+            "📱 <b>اتصال حساب شخصی</b>\n"
+            "برای امنیت حساب، اتصال باید روی دستگاه خودت انجام شود.\n\n"
+            "🔐 <b>وضعیت:</b> هنوز حسابی متصل نشده است.\n"
+            "🛡️ کد ورود و رمز دوم خود را در اختیار هیچ‌کس قرار نده.\n\n"
+            "✨ از راهنمای زیر برای آشنایی با مراحل استفاده کن."
+        )
+        kb = [
+            [InlineKeyboardButton("📖 راهنمای اتصال", callback_data="guide")],
+            [InlineKeyboardButton("🔄 بررسی وضعیت", callback_data="self")],
+            [InlineKeyboardButton("🔙 بازگشت", callback_data="home")]
+        ]
     elif key == "config":
         text = "⚙️ <b>بخش کانفیگ</b>\n\nاین خدمت در حال آماده‌سازی است و به‌زودی در NIRO SELF فعال می‌شود."
         kb = [[InlineKeyboardButton("🔙 بازگشت", callback_data="home")]]
@@ -227,14 +239,23 @@ async def show_section(update, context):
 async def guide(update, context):
     q = update.callback_query
     await q.answer()
-    text = ("📖 <b>راهنمای فعال‌سازی سلف</b>\n\n"
-            "۱. ابتدا از حساب کاربری و وضعیت دسترسی خود مطمئن شو.\n"
-            "۲. اطلاعات و مجوزهای لازم را فقط در بخش رسمی ربات وارد کن.\n"
-            "۳. تا زمان انتشار نسخه پایدار، این بخش غیرفعال است.\n"
-            "۴. برای اطلاع از زمان فعال‌سازی، اطلاعیه‌های ربات را دنبال کن.\n\n"
-            "🛡️ اطلاعات ورود و کدهای محرمانه خود را برای هیچ‌کس ارسال نکن.")
-    await q.edit_message_text(text, parse_mode=ParseMode.HTML,
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 بازگشت", callback_data="help")]]))
+    text = (
+        "📖 <b>راهنمای اتصال NIRO SELF</b>\n"
+        "━━━━━━━━━━━━━━\n\n"
+        "۱️⃣ از حساب تلگرام خودت و دستگاه شخصی‌ات استفاده کن.\n\n"
+        "۲️⃣ کد ورود تلگرام و رمز دوم را فقط در برنامه رسمی تلگرام وارد کن.\n\n"
+        "۳️⃣ سشن یا فایل ورود حساب را برای افراد دیگر ارسال نکن.\n\n"
+        "۴️⃣ برای مدیریت حساب، از تنظیمات تلگرام و دستگاه‌های متصل استفاده کن.\n\n"
+        "🛡️ NIRO هیچ کد ورود یا رمز دوم تو را درخواست نمی‌کند."
+    )
+    await q.edit_message_text(
+        text,
+        parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🛠️ پنل سلف", callback_data="self")],
+            [InlineKeyboardButton("🔙 بازگشت", callback_data="help")]
+        ])
+    )
 
 # ===================== خرید الماس =====================
 def keypad(amount):
