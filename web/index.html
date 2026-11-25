@@ -2,59 +2,291 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#090b18">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#090612">
 <title>NIRO SELF</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+
+:root {
+ --bg:#090612; --card:#151026; --purple:#a855f7;
+ --border:#7626c8; --text:#f6f0ff; --muted:#aaa0c8;
+ --green:#37ed82; --red:#ff527b;
+}
 *{box-sizing:border-box}
 body{
- margin:0;min-height:100vh;color:#fff;
- font-family:Tahoma,Arial,sans-serif;
- background:radial-gradient(circle at 50% 0,#25215a,#0b0d1c 55%,#070812);
- display:flex;align-items:center;justify-content:center;
- padding:22px
+ margin:0;background:var(--bg);color:var(--text);
+ font-family:Vazirmatn,sans-serif;
+ background-image:radial-gradient(ellipse at 50% -10%,#40107855,transparent 60%);
+ min-height:100vh;
 }
-.card{
- width:100%;max-width:440px;padding:30px 22px;
- border:1px solid #55518c;border-radius:25px;
- background:rgba(20,22,46,.82);
- box-shadow:0 15px 55px #0009;
- text-align:center
+button,input{font-family:inherit}
+button{cursor:pointer}
+header{
+ display:flex;align-items:center;justify-content:space-between;
+ padding:16px 19px;border-bottom:1px solid #36165a;
+ background:#100a20cc;position:sticky;top:0;z-index:10;
+ backdrop-filter:blur(15px)
 }
-.logo{
- width:85px;height:85px;margin:auto auto 18px;
- border-radius:25px;display:grid;place-items:center;
- background:linear-gradient(140deg,#8b5cf6,#2563eb);
- font-size:30px;font-weight:bold;
- box-shadow:0 0 35px #7654f477
+.logo{display:flex;align-items:center;gap:11px}
+.logoicon{
+ width:43px;height:43px;border-radius:14px;
+ display:grid;place-items:center;font-size:24px;font-weight:900;
+ background:linear-gradient(135deg,#6d16ce,#1d0a43);
+ border:1px solid #b75bff;box-shadow:0 0 18px #8628df55
 }
-h1{font-size:27px;letter-spacing:2px;margin:8px}
-.sub{color:#aaaac7;font-size:13px;line-height:2}
-.status{
- margin-top:25px;padding:16px;border-radius:15px;
- background:#ffffff0a;border:1px solid #ffffff16;
- color:#c9c5ed;font-size:13px;line-height:2
+.logo h1{font-size:18px;margin:0}
+.logo small{color:var(--muted);font-size:11px}
+.headerbtn{border:1px solid #6025a1;background:#1a1030;color:white;border-radius:12px;padding:9px 13px}
+main{max-width:600px;margin:auto;padding:17px}
+.hero{
+ position:relative;overflow:hidden;border:1px solid #9b39f4;
+ border-radius:24px;padding:20px;
+ background:linear-gradient(120deg,#1a0c36,#10091e 65%,#270b48);
+ box-shadow:0 0 25px #6c1ac333
 }
-.tag{color:#a78bfa;font-weight:bold}
+.hero:before{content:"";position:absolute;width:230px;height:230px;border-radius:50%;border:1px solid #9c35fa33;left:-90px;top:-100px;box-shadow:0 0 0 25px #a344ff08,0 0 0 50px #a344ff08}
+.herohead{display:flex;gap:13px;align-items:center}
+.avatar{
+ width:72px;height:72px;border-radius:50%;display:grid;place-items:center;
+ background:linear-gradient(135deg,#451182,#120824);
+ border:2px solid #b65aff;box-shadow:0 0 18px #922eff55;font-size:32px
+}
+.hero h2{font-size:20px;margin:0 0 5px}
+.hero p{color:var(--muted);font-size:13px;margin:0}
+.status{color:var(--green)!important}
+.clockhero{font-size:24px;font-weight:800;color:#e7c7ff;margin-top:18px}
+.clockhero span{font-size:12px;color:var(--muted);font-weight:400}
+.banner{
+ margin:15px 0;border:1px solid #4b2782;border-radius:18px;
+ padding:14px;text-align:center;background:#120c23
+}
+.banner strong{color:var(--purple);font-size:14px}
+.banner p{margin:5px 0 0;font-size:12px;color:var(--muted)}
+.sectiontitle{display:flex;align-items:center;justify-content:space-between;margin:21px 3px 12px}
+.sectiontitle h3{font-size:15px;margin:0}
+.sectiontitle small{color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.tile{
+ min-height:130px;border:1px solid #4f237d;border-radius:20px;
+ padding:15px;background:linear-gradient(145deg,#1c1232,#100b1e);
+ text-align:right;color:white;transition:.2s
+}
+.tile:active{transform:scale(.97)}
+.tile .emoji{font-size:27px;display:block;margin-bottom:9px}
+.tile h4{font-size:14px;margin:0 0 6px}
+.tile p{font-size:11px;color:var(--muted);margin:0;line-height:1.8}
+.tile .arrow{float:left;color:#bd70ff;font-size:20px}
+.statuscard{
+ border:1px solid #4c237b;background:#130c24;border-radius:18px;
+ margin-top:15px;padding:14px
+}
+.statusrow{display:flex;justify-content:space-between;align-items:center;margin:7px 0}
+.statusrow span{font-size:13px}
+.statusrow small{color:var(--muted)}
+.switch{width:43px;height:24px;border-radius:30px;border:0;background:#3b3150;position:relative}
+.switch:after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:white;top:3px;right:3px;transition:.2s}
+.switch.on{background:#16bb65}
+.switch.on:after{right:22px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+.action{
+ border-radius:15px;padding:13px;border:1px solid #652ba1;
+ background:#1a1030;color:white;font-size:13px
+}
+.action.red{border-color:#772443;color:#ff7091}
+footer{text-align:center;color:#75668f;font-size:11px;padding:24px 10px}
+.modalbg{
+ position:fixed;inset:0;background:#000b;z-index:30;
+ display:none;align-items:flex-end;justify-content:center
+}
+.modalbg.show{display:flex}
+.modal{
+ width:100%;max-width:600px;background:#160d27;border:1px solid #7d35bd;
+ border-radius:25px 25px 0 0;padding:22px;max-height:85vh;overflow:auto
+}
+.modal h3{margin:0 0 15px}
+.modal p{color:var(--muted);font-size:13px;line-height:2}
+.modal input{
+ width:100%;padding:13px;border:1px solid #6c35a4;border-radius:12px;
+ background:#0d0719;color:white;outline:none;margin:8px 0
+}
+.modal input:focus{border-color:#c084fc}
+.primary{
+ width:100%;padding:13px;border:0;border-radius:13px;
+ color:white;font-weight:bold;background:linear-gradient(90deg,#7022c7,#a83cff);
+ margin-top:9px
+}
+.close{float:left;background:none;border:0;color:#bba5d7;font-size:20px}
+.notice{background:#241333;border:1px solid #713e9e;border-radius:12px;padding:12px;font-size:12px;color:#d5b9ef;line-height:1.9}
+.featureline{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #332146;padding:12px 0}
+.featureline:last-child{border:0}
+.featureline b{font-size:13px}
+.featureline small{display:block;color:var(--muted);font-size:11px}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
-<div class="card">
- <div class="logo">N</div>
- <h1>NIRO SELF</h1>
- <div class="tag">PERSONAL ACCOUNT PANEL</div>
- <p class="sub">پنل مدیریت هوشمند اکانت تلگرام</p>
- <div class="status">
-  <div>🟢 ارتباط با سرور برقرار است</div>
-  <div>مرحله اتصال امن حساب در حال آماده‌سازی است.</div>
+
+<header>
+ <div class="logo">
+  <div class="logoicon">N</div>
+  <div><h1>NIRO SELF</h1><small>پنل مدیریت حساب</small></div>
+ </div>
+ <button class="headerbtn" onclick="openModal('about')">ⓘ درباره</button>
+</header>
+
+<main>
+<section class="hero">
+ <div class="herohead">
+  <div class="avatar">♛</div>
+  <div>
+   <h2 id="profileName">NIRO USER</h2>
+   <p id="profileStatus" class="status">● حساب هنوز متصل نشده</p>
+  </div>
+ </div>
+ <div class="clockhero" id="clock">00:00:00 <span>ساعت افغانستان</span></div>
+</section>
+
+<div class="banner" id="banner">
+ <strong id="bannerTitle">🔐 اتصال حساب تلگرام</strong>
+ <p id="bannerText">برای مشاهده امکانات، ابتدا حساب خود را متصل کنید.</p>
+ <button class="primary" onclick="openModal('connect')" id="connectBtn">اتصال حساب</button>
+ <button class="primary hidden" onclick="showDashboard()" id="demoBtn">مشاهده پنل (دمو)</button>
+</div>
+
+<section id="dashboard" class="hidden">
+ <div class="sectiontitle">
+  <h3>⚡ امکانات سلف</h3>
+  <small>مدیریت امکانات حساب</small>
+ </div>
+
+ <div class="grid">
+  <button class="tile" onclick="openModal('clocksettings')">
+   <span class="emoji">⏰</span><h4>ساعت زنده <span class="arrow">‹</span></h4>
+   <p>نمایش ساعت در نام خانوادگی</p>
+  </button>
+  <button class="tile" onclick="openModal('profile')">
+   <span class="emoji">✏️</span><h4>مدیریت نام و بیو <span class="arrow">‹</span></h4>
+   <p>ویرایش مشخصات پروفایل</p>
+  </button>
+  <button class="tile" onclick="openModal('autoreply')">
+   <span class="emoji">💬</span><h4>پاسخ خودکار <span class="arrow">‹</span></h4>
+   <p>تنظیم پیام و زمان پاسخ</p>
+  </button>
+  <button class="tile" onclick="openModal('lists')">
+   <span class="emoji">👥</span><h4>دوستان و لیست سیاه <span class="arrow">‹</span></h4>
+   <p>مدیریت مخاطبان</p>
+  </button>
+  <button class="tile" onclick="openModal('media')">
+   <span class="emoji">📥</span><h4>ذخیره رسانه <span class="arrow">‹</span></h4>
+   <p>مدیریت ذخیره رسانه</p>
+  </button>
+  <button class="tile" onclick="openModal('settings')">
+   <span class="emoji">⚙️</span><h4>تنظیمات سلف <span class="arrow">‹</span></h4>
+   <p>تنظیم و کنترل امکانات</p>
+  </button>
+ </div>
+
+ <div class="statuscard">
+  <div class="statusrow">
+   <span>وضعیت سلف</span><button class="switch on" id="selfSwitch" onclick="toggleSelf()"></button>
+  </div>
+  <div class="statusrow"><span>منطقه زمانی</span><small>Asia/Kabul</small></div>
+  <div class="statusrow"><span>ساعت محلی</span><small id="localTime">--:--</small></div>
+ </div>
+
+ <div class="actions">
+  <button class="action" onclick="refreshUI()">🔄 بروزرسانی پنل</button>
+  <button class="action red" onclick="disconnect()">⛔ قطع اتصال</button>
+ </div>
+</section>
+
+<footer>NIRO SELF • Personal Account Panel<br>نسخه نمایشی رابط کاربری</footer>
+</main>
+
+<div class="modalbg" id="modalbg" onclick="if(event.target===this)closeModal()">
+ <div class="modal">
+  <button class="close" onclick="closeModal()">✕</button>
+  <div id="modalcontent"></div>
  </div>
 </div>
+
 <script>
-const tg = window.Telegram && window.Telegram.WebApp;
-if(tg){
- tg.ready();
- tg.expand();
+const clockEl=document.getElementById('clock');
+function updateClock(){
+ const now=new Date();
+ const time=new Intl.DateTimeFormat('fa-IR',{
+  timeZone:'Asia/Kabul',hour:'2-digit',minute:'2-digit',second:'2-digit',
+  hour12:false
+ }).format(now);
+ clockEl.innerHTML=time+' <span>ساعت افغانستان</span>';
+ document.getElementById('localTime').textContent=time;
+}
+updateClock();setInterval(updateClock,1000);
+
+function openModal(type){
+ const content=document.getElementById('modalcontent');
+ const pages={
+ about:`<h3>♛ درباره NIRO SELF</h3><p>پنل مدیریت حساب تلگرام با رابط کاربری فارسی. این نسخه صرفاً نمایشی است و هنوز به حساب تلگرام متصل نیست.</p>`,
+ connect:`<h3>🔐 اتصال حساب</h3>
+ <p>اتصال حساب باید در محیط امن دستگاه خودتان انجام شود.</p>
+ <div class="notice">این نسخه آزمایشی است. شماره تلفن، کد ورود یا رمز دومرحله‌ای خود را در این صفحه وارد نکنید. این فرم هنوز به تلگرام وصل نیست.</div>
+ <button class="primary" onclick="closeModal();showDashboard()">مشاهده پنل آزمایشی</button>`,
+ clocksettings:`<h3>⏰ تنظیم ساعت زنده</h3>
+ <p>ساعت افغانستان: <b id="modalClock">--:--</b></p>
+ <div class="featureline"><b>نمایش ساعت</b><button class="switch on" onclick="this.classList.toggle('on')"></button></div>
+ <p>فرمت ساعت</p><button class="action" onclick="alert('این گزینه در نسخه بعدی فعال می‌شود')">۲۴ ساعته</button>
+ <p>این تنظیمات فعلاً نمونه رابط است و نام حساب تلگرام را تغییر نمی‌دهد.</p>`,
+ profile:`<h3>✏️ مدیریت پروفایل</h3><p>ویرایش نام و بیو (نمایشی)</p>
+ <input placeholder="نام"><input placeholder="نام خانوادگی"><input placeholder="بیوگرافی">
+ <button class="primary" onclick="alert('دمو: تغییرات هنوز به تلگرام ارسال نمی‌شود')">ذخیره آزمایشی</button>`,
+ autoreply:`<h3>💬 پاسخ خودکار</h3><p>تنظیم پاسخ خودکار (دمو)</p>
+ <textarea style="width:100%;height:100px;background:#0d0719;color:white;border:1px solid #6c35a4;border-radius:12px;padding:12px" placeholder="متن پاسخ خودکار"></textarea>
+ <div class="featureline"><b>فعال‌سازی پاسخ خودکار</b><button class="switch" onclick="this.classList.toggle('on')"></button></div>
+ <p>این قابلیت هنوز به پیام‌های تلگرام وصل نشده است.</p>`,
+ lists:`<h3>👥 مدیریت فهرست‌ها</h3><input placeholder="آیدی یا نام مخاطب">
+ <button class="primary" onclick="alert('نسخه آزمایشی')">افزودن مخاطب</button>
+ <p>فهرست دوستان و استثناها در نسخه فعلی ذخیره نمی‌شود.</p>`,
+ media:`<h3>📥 ذخیره رسانه</h3><p>تنظیمات رسانه در نسخه آزمایشی</p>
+ <div class="featureline"><b>مدیریت رسانه‌ها</b><button class="switch" onclick="this.classList.toggle('on')"></button></div>
+ <p>فقط رسانه‌هایی که اجازه ذخیره آن‌ها را دارید.</p>`,
+ settings:`<h3>⚙️ تنظیمات</h3>
+ <div class="featureline"><b>اعلان‌ها</b><button class="switch on" onclick="this.classList.toggle('on')"></button></div>
+ <div class="featureline"><b>ظاهر نئونی</b><button class="switch on" onclick="this.classList.toggle('on')"></button></div>
+ <p>این تنظیمات فعلاً محلی و آزمایشی هستند.</p>`
+ };
+ content.innerHTML=pages[type]||'<h3>امکانات</h3>';
+ document.getElementById('modalbg').classList.add('show');
+ if(type==='clocksettings'){
+  setTimeout(()=>{const el=document.getElementById('modalClock');if(el)el.textContent=new Intl.DateTimeFormat('fa-IR',{timeZone:'Asia/Kabul',hour:'2-digit',minute:'2-digit'}).format(new Date())},50);
+ }
+}
+function closeModal(){document.getElementById('modalbg').classList.remove('show')}
+function showDashboard(){
+ document.getElementById('dashboard').classList.remove('hidden');
+ document.getElementById('connectBtn').classList.add('hidden');
+ document.getElementById('demoBtn').classList.add('hidden');
+ document.getElementById('bannerTitle').textContent='🟣 پنل آزمایشی NIRO';
+ document.getElementById('bannerText').textContent='این پنل نمایشی است؛ حساب تلگرام هنوز وصل نشده.';
+ document.getElementById('profileName').textContent='NIRO USER';
+ document.getElementById('profileStatus').textContent='● حالت نمایشی';
+ closeModal();
+}
+function toggleSelf(){
+ const sw=document.getElementById('selfSwitch');
+ sw.classList.toggle('on');
+ alert(sw.classList.contains('on')?'حالت نمایشی روشن شد':'حالت نمایشی خاموش شد');
+}
+function refreshUI(){updateClock();alert('پنل نمایشی بروزرسانی شد')}
+function disconnect(){
+ if(confirm('از پنل نمایشی خارج شوید؟')){
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('connectBtn').classList.remove('hidden');
+  document.getElementById('bannerTitle').textContent='🔐 اتصال حساب تلگرام';
+  document.getElementById('bannerText').textContent='برای مشاهده امکانات، ابتدا حساب خود را متصل کنید.';
+  document.getElementById('profileName').textContent='NIRO USER';
+  document.getElementById('profileStatus').textContent='● حساب هنوز متصل نشده';
+ }
 }
 </script>
 </body>
