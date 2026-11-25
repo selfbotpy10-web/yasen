@@ -1,0 +1,14 @@
+
+# NIRO private account data
+*.session
+*.session-journal
+self_panel_settings.json
+niro_user.session
+niro_user.session-journal
+.env
+__pycache__/
+*.pyc
+*.session
+*.session-journal
+.env
+self_panel_settings.json
