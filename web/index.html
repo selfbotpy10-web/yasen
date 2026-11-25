@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090b18">
+<title>NIRO SELF</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;color:#fff;
+ font-family:Tahoma,Arial,sans-serif;
+ background:radial-gradient(circle at 50% 0,#25215a,#0b0d1c 55%,#070812);
+ display:flex;align-items:center;justify-content:center;
+ padding:22px
+}
+.card{
+ width:100%;max-width:440px;padding:30px 22px;
+ border:1px solid #55518c;border-radius:25px;
+ background:rgba(20,22,46,.82);
+ box-shadow:0 15px 55px #0009;
+ text-align:center
+}
+.logo{
+ width:85px;height:85px;margin:auto auto 18px;
+ border-radius:25px;display:grid;place-items:center;
+ background:linear-gradient(140deg,#8b5cf6,#2563eb);
+ font-size:30px;font-weight:bold;
+ box-shadow:0 0 35px #7654f477
+}
+h1{font-size:27px;letter-spacing:2px;margin:8px}
+.sub{color:#aaaac7;font-size:13px;line-height:2}
+.status{
+ margin-top:25px;padding:16px;border-radius:15px;
+ background:#ffffff0a;border:1px solid #ffffff16;
+ color:#c9c5ed;font-size:13px;line-height:2
+}
+.tag{color:#a78bfa;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="card">
+ <div class="logo">N</div>
+ <h1>NIRO SELF</h1>
+ <div class="tag">PERSONAL ACCOUNT PANEL</div>
+ <p class="sub">پنل مدیریت هوشمند اکانت تلگرام</p>
+ <div class="status">
+  <div>🟢 ارتباط با سرور برقرار است</div>
+  <div>مرحله اتصال امن حساب در حال آماده‌سازی است.</div>
+ </div>
+</div>
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+if(tg){
+ tg.ready();
+ tg.expand();
+}
+</script>
+</body>
+</html>
