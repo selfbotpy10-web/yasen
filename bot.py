@@ -8,7 +8,7 @@ from datetime import datetime
 
 from telegram import (
     Update, InlineKeyboardButton, InlineKeyboardMarkup,
-    ReplyKeyboardMarkup, KeyboardButton
+    ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 )
 from telegram.constants import ParseMode
 from telegram.request import HTTPXRequest
@@ -129,7 +129,11 @@ WELCOME = (
 
 def main_keyboard():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("✅ فعال‌سازی سلف", callback_data="self")],
+        [InlineKeyboardButton(
+            "🌐 ورود به پنل NIRO SELF",
+            web_app=WebAppInfo(url=NIRO_WEBAPP_URL)
+        )],
+        [InlineKeyboardButton("✅ امکانات سلف", callback_data="self")],
         [InlineKeyboardButton("👥 مدیریت گروه و بازی", callback_data="group"),
          InlineKeyboardButton("👤 حساب کاربری", callback_data="account")],
         [InlineKeyboardButton("💎 خرید الماس", callback_data="buy"),
