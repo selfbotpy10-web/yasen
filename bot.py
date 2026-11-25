@@ -194,17 +194,19 @@ async def show_section(update, context):
         return await account(update, context)
     if key == "self":
         text = (
-            "🛠 <b>پنل فعال‌سازی NIRO SELF</b>\n"
+            "🛠 <b>پنل NIRO SELF</b>\n"
             "━━━━━━━━━━━━━━\n\n"
-            "📱 <b>اتصال حساب شخصی</b>\n"
-            "برای امنیت حساب، اتصال باید روی دستگاه خودت انجام شود.\n\n"
-            "🔐 <b>وضعیت:</b> هنوز حسابی متصل نشده است.\n"
-            "🛡️ کد ورود و رمز دوم خود را در اختیار هیچ‌کس قرار نده.\n\n"
-            "✨ از راهنمای زیر برای آشنایی با مراحل استفاده کن."
+            "یکی از امکانات پنل را انتخاب کن:\n"
+            "🔐 حساب شخصی خودت را فقط روی دستگاه خودت مدیریت کن."
         )
         kb = [
+            [InlineKeyboardButton("🕒 ساعت بیو", callback_data="selfinfo:bio"),
+             InlineKeyboardButton("🕒 ساعت نام خانوادگی", callback_data="selfinfo:surname")],
+            [InlineKeyboardButton("💬 پاسخ خودکار", callback_data="selfinfo:reply"),
+             InlineKeyboardButton("👥 دوستان و دشمنان", callback_data="selfinfo:friends")],
+            [InlineKeyboardButton("💾 ذخیره رسانه", callback_data="selfinfo:media"),
+             InlineKeyboardButton("⚙️ تنظیمات", callback_data="selfinfo:settings")],
             [InlineKeyboardButton("📖 راهنمای اتصال", callback_data="guide")],
-            [InlineKeyboardButton("🔄 بررسی وضعیت", callback_data="self")],
             [InlineKeyboardButton("🔙 بازگشت", callback_data="home")]
         ]
     elif key == "config":
@@ -235,6 +237,30 @@ async def show_section(update, context):
     else:
         return
     await q.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(kb))
+
+async def self_feature_info(update, context):
+    q = update.callback_query
+    await q.answer()
+    key = q.data.split(":", 1)[1]
+
+    pages = {
+        "bio": ("🕒 ساعت بیو", "نمایش ساعت در بیوگرافی حساب. فعال‌سازی و تنظیم آن باید روی حساب شخصی خودت انجام شود."),
+        "surname": ("🕒 ساعت نام خانوادگی", "تغییر زمان‌دار نام خانوادگی. برای جلوگیری از تغییر ناخواسته، این تنظیم فقط روی حسابی که خودت کنترل می‌کنی انجام شود."),
+        "reply": ("💬 پاسخ خودکار", "تنظیم متن پاسخ خودکار، زمان فعالیت و محدودکردن پاسخ به مخاطبین."),
+        "friends": ("👥 دوستان و دشمنان", "تنظیم فهرست مخاطبین مجاز و فهرست‌هایی که پاسخ خودکار برایشان فعال یا غیرفعال باشد."),
+        "media": ("💾 ذخیره رسانه", "مدیریت ذخیره رسانه‌هایی که خودت مجاز به دریافت و نگهداری آن‌ها هستی."),
+        "settings": ("⚙️ تنظیمات", "تنظیمات پنل و راهنمای اجرای محلی. اطلاعات ورود و فایل سشن را در اختیار ربات یا افراد دیگر قرار نده."),
+    }
+
+    title, description = pages.get(key, ("پنل NIRO", "گزینه نامعتبر است."))
+    text = f"<b>{title}</b>\\n━━━━━━━━━━━━━━\\n\\n{description}\\n\\n🛡️ این صفحه تنظیمات را نمایش می‌دهد؛ اجرای واقعی روی حساب باید در دستگاه و حساب خودت انجام شود."
+    kb = [
+        [InlineKeyboardButton("⬅️ برگشت به پنل", callback_data="self")],
+        [InlineKeyboardButton("📖 راهنما", callback_data="guide")],
+        [InlineKeyboardButton("🏠 منوی اصلی", callback_data="home")]
+    ]
+    await q.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(kb))
+
 
 async def guide(update, context):
     q = update.callback_query
@@ -665,6 +691,8 @@ async def callbacks(update, context):
         return await update.callback_query.edit_message_text(WELCOME, parse_mode=ParseMode.HTML, reply_markup=main_keyboard())
     if data in ("account","self","group","config","free","help"):
         return await show_section(update, context)
+    if data.startswith("selfinfo:"):
+        return await self.self_feature_info(update, context)
     if data == "guide": return await guide(update, context)
     if data == "buy": return await buy_start(update, context)
     if data.startswith(("digit:","buy_confirm","buy_cancel")):
