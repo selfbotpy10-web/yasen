@@ -1,1 +1,1 @@
-worker: python run_all.py
+worker: python -u bot.py
