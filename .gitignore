@@ -5,3 +5,7 @@ __pycache__/
 *.pyc
 self_panel_settings.json
 *.sqlite3
+
+.env
+*.session
+*.session-journal

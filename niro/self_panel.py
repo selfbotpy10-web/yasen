@@ -363,10 +363,7 @@ async def main():
     load_settings()
     await client.connect()
     if not await client.is_user_authorized():
-        raise SystemExit(
-            "NIRO session is not authorized. "
-            "Authorize this account securely before deployment."
-        )
+        raise SystemExit("NIRO session is not authorized.")
     me = await client.get_me()
     if not settings.get("profile_initialized"):
         try:
