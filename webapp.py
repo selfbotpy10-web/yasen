@@ -157,3 +157,85 @@ async def save_settings(
         """, (user["id"], json.dumps(settings, ensure_ascii=False)))
 
     return {"ok": True, "message": "تنظیمات ذخیره شد"}
+
+
+# ---------- NIRO PHONE AGENT STATUS ----------
+AGENT_SECRET = os.getenv("NIRO_AGENT_SECRET", "")
+
+with db() as con:
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS agent_status (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            authorized INTEGER NOT NULL DEFAULT 0,
+            device TEXT NOT NULL DEFAULT 'Termux',
+            last_seen TEXT,
+            detail TEXT NOT NULL DEFAULT ''
+        )
+    """)
+
+class AgentHeartbeat(BaseModel):
+    authorized: bool
+    device: str = "Termux"
+    detail: str = ""
+
+def verify_agent_secret(secret):
+    if not AGENT_SECRET or not hmac.compare_digest(
+        secret, AGENT_SECRET
+    ):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+@app.post("/api/agent/heartbeat")
+async def agent_heartbeat(
+    payload: AgentHeartbeat,
+    x_agent_secret: str = Header(default="", alias="X-NIRO-AGENT-SECRET")
+):
+    verify_agent_secret(x_agent_secret)
+
+    from datetime import datetime, timezone
+    now_utc = datetime.now(timezone.utc).isoformat()
+
+    with db() as con:
+        con.execute("""
+            INSERT INTO agent_status
+                (id, authorized, device, last_seen, detail)
+            VALUES (1, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                authorized=excluded.authorized,
+                device=excluded.device,
+                last_seen=excluded.last_seen,
+                detail=excluded.detail
+        """, (
+            int(payload.authorized),
+            payload.device[:40],
+            now_utc,
+            payload.detail[:200]
+        ))
+
+    return {"ok": True}
+
+@app.get("/api/agent/status")
+async def agent_status(
+    x_agent_secret: str = Header(default="", alias="X-NIRO-AGENT-SECRET")
+):
+    verify_agent_secret(x_agent_secret)
+
+    with db() as con:
+        row = con.execute("""
+            SELECT authorized, device, last_seen, detail
+            FROM agent_status WHERE id=1
+        """).fetchone()
+
+    if not row:
+        return {"online": False, "authorized": False, "last_seen": None}
+
+    from datetime import datetime, timezone, timedelta
+    seen = datetime.fromisoformat(row[2])
+    online = datetime.now(timezone.utc) - seen < timedelta(seconds=120)
+
+    return {
+        "online": online,
+        "authorized": bool(row[0]) if online else False,
+        "device": row[1],
+        "last_seen": row[2],
+        "detail": row[3] if online else "Agent heartbeat expired"
+    }
