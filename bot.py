@@ -766,9 +766,9 @@ async def group_text(update, context):
         return
     # بازی‌های جدید: بازی ۵۰۰، دوز ۲۰، پولیس ۲۰، تاس ۲۰
     normalized = txt.translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789"))
-    if re.fullmatch(r"بازی\\s+500", normalized):
+    if re.fullmatch(r"بازی\s+500", normalized):
         return await create_party_game(m, "team500", 500)
-    pm = re.fullmatch(r"(دوز|پولیس|تاس)\\s+([0-9]+)", normalized)
+    pm = re.fullmatch(r"(دوز|پولیس|تاس)\s+([0-9]+)", normalized)
     if pm:
         kind = {"دوز": "tictactoe", "پولیس": "police", "تاس": "dice"}[pm.group(1)]
         return await create_party_game(m, kind, int(pm.group(2)))
@@ -992,11 +992,11 @@ async def create_party_game(message, kind, stake):
         gid = cur.lastrowid
     needed = 2 if kind == "tictactoe" else 4
     caption = (
-        f"╭━━━━━━ 🎮 ━━━━━━╮\\n"
-        f"│ 𝐍𝐈𝐑𝐎 𝐕𝐈𝐏 • {PARTY_LABELS[kind]}\\n"
-        f"│ 💎 شرط هر نفر: {stake:,}\\n"
-        f"│ 👥 ظرفیت: {needed} نفر\\n"
-        f"│ 🟢 برای شرکت دکمه پیوستن را بزن\\n"
+        f"╭━━━━━━ 🎮 ━━━━━━╮\n"
+        f"│ 𝐍𝐈𝐑𝐎 𝐕𝐈𝐏 • {PARTY_LABELS[kind]}\n"
+        f"│ 💎 شرط هر نفر: {stake:,}\n"
+        f"│ 👥 ظرفیت: {needed} نفر\n"
+        f"│ 🟢 برای شرکت دکمه پیوستن را بزن\n"
         f"╰━━━━━━━━━━━━━━━━━━╯"
     )
     creator_photo = await fetch_profile_bytes(message.get_bot(), uid)
@@ -1037,10 +1037,10 @@ async def party_finish(context, gid, chat_id, players, winners, label):
         name = (row["first_name"] if row else "بازیکن") or "بازیکن"
         names.append(f"<a href='tg://user?id={uid}'>{name}</a>")
     text = (
-        "╭━━━━━━━ 👑 ━━━━━━━╮\\n       <b>𝐍𝐈𝐑𝐎 𝐕𝐈𝐏</b>\\n╰━━━━━━━━━━━━━━━━╯\\n"
-        f"🏆 برنده: {'، '.join(names)}\\n"
-        f"💎 جایزه هر برنده: {each:,}\\n"
-        f"🧾 مالیات: {tax + remainder:,}\\n"
+        "╭━━━━━━━ 👑 ━━━━━━━╮\n       <b>𝐍𝐈𝐑𝐎 𝐕𝐈𝐏</b>\n╰━━━━━━━━━━━━━━━━╯\n"
+        f"🏆 برنده: {'، '.join(names)}\n"
+        f"💎 جایزه هر برنده: {each:,}\n"
+        f"🧾 مالیات: {tax + remainder:,}\n"
         "╰━━━━━━━━━━━━━━━━━━╯"
     )
     try:
@@ -1121,7 +1121,7 @@ async def party_callbacks(update, context):
         if kind == "tictactoe":
             with db() as c:
                 c.execute("UPDATE party_games SET turn_id=? WHERE id=?", (players[0], gid))
-            text = f"⭕ <b>بازی دوز آغاز شد</b>\\n❌ نوبت: <a href='tg://user?id={players[0]}'>بازیکن اول</a>"
+            text = f"⭕ <b>بازی دوز آغاز شد</b>\n❌ نوبت: <a href='tg://user?id={players[0]}'>بازیکن اول</a>"
             return await party_edit_message(
                 q, text, parse_mode=ParseMode.HTML,
                 reply_markup=party_keyboard(gid, kind, players, "playing")
@@ -1141,7 +1141,7 @@ async def party_callbacks(update, context):
                 with db() as c:
                     c.execute("UPDATE party_games SET status='draw' WHERE id=?", (gid,))
                 return await party_edit_message(
-                    q, f"🎴 رقابت ۵۰۰ مساوی شد!\\nتیم اول: {score_a} | تیم دوم: {score_b}\\n💎 شرط‌ها بازگشت داده شد."
+                    q, f"🎴 رقابت ۵۰۰ مساوی شد!\nتیم اول: {score_a} | تیم دوم: {score_b}\n💎 شرط‌ها بازگشت داده شد."
                 )
             winners = team_a if score_a > score_b else team_b
             return await party_finish(context, gid, g["chat_id"], players, winners, "۵۰۰ چهار نفره")
@@ -1215,7 +1215,7 @@ async def party_callbacks(update, context):
         await q.answer("حرکت ثبت شد.")
         row = user_row(nxt)
         turn_name = (row["first_name"] if row else "بازیکن")
-        text = f"⭕ <b>بازی دوز</b>\\nنوبت: <a href='tg://user?id={nxt}'>{turn_name}</a>"
+        text = f"⭕ <b>بازی دوز</b>\nنوبت: <a href='tg://user?id={nxt}'>{turn_name}</a>"
         return await party_edit_message(
             q, text, parse_mode=ParseMode.HTML,
             reply_markup=party_keyboard(gid, "tictactoe", players, "playing", "".join(board))
