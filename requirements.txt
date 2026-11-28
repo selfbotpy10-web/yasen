@@ -1,0 +1,8 @@
+python-telegram-bot>=21,<23
+python-dotenv>=1,<2
+Pillow>=10,<13
+Pyrogram>=2.0.106,<3
+TgCrypto>=1.2.5
+requests>=2.31,<3
+aiohttp>=3.9,<4
+pytz>=2024.1
